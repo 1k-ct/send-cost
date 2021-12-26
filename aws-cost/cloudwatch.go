@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"golang.org/x/xerrors"
 )
 
 // response
@@ -32,71 +32,99 @@ import (
 // aws services https://pkg.go.dev/github.com/aws/aws-sdk-go@v1.42.16/aws/endpoints#pkg-constants
 //
 // https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html
-func FetchMetricStatisticsBilling(serviceName string) (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
-	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-east-1")})
+func (s *Sessioner) FetchMetricStatisticsBilling(fetcher *Fetcher, serviceName string) (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
+	svc, err := s.s.newCloudwatchSession()
 	if err != nil {
 		return metricsStatistic, err
 	}
 
-	svc := cloudwatch.New(sess)
-
-	input := &cloudwatch.GetMetricStatisticsInput{
-		Namespace:  aws.String("AWS/Billing"),
-		MetricName: aws.String("EstimatedCharges"),
-		Period:     aws.Int64(86400), // 1 day = 86400 sec
-		StartTime:  aws.Time(time.Now().AddDate(0, 0, -1)),
-		EndTime:    aws.Time(time.Now()),
-		// StartTime: aws.Time(time.Now().AddDate(0, 0, -3)),
-		// EndTime:   aws.Time(time.Now().AddDate(0, 0, -2)),
-		Statistics: []*string{
-			aws.String(cloudwatch.StatisticMaximum),
-		},
-		Dimensions: []*cloudwatch.Dimension{
-			{
-				Name:  aws.String("Currency"),
-				Value: aws.String("USD"),
-			}, {
-				Name:  aws.String("ServiceName"),
-				Value: aws.String(serviceName),
-			},
-		},
-		Unit: aws.String(cloudwatch.StandardUnitNone),
-	}
-
-	metricsStatistic, err = svc.GetMetricStatistics(input)
+	// f := &Fetched{f: &GettedMetricStatisticsOne{ServiceName: serviceName}}
+	f := &Fetched{f: *fetcher}
+	metricsStatistic, err = f.f.fetch(svc)
 	if err != nil {
 		return metricsStatistic, err
 	}
 	return metricsStatistic, nil
 }
-func FetchTotalBilling() (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
+
+type Sessioner struct {
+	s sessioner
+}
+type sessioner interface {
+	newCloudwatchSession() (*cloudwatch.CloudWatch, error)
+}
+type CloudwatchSession struct{}
+
+func (c *CloudwatchSession) newCloudwatchSession() (*cloudwatch.CloudWatch, error) {
 	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-east-1")})
+	if err != nil {
+		return nil, xerrors.New(err.Error())
+	}
+	svc := cloudwatch.New(sess)
+	return svc, nil
+}
+
+type Fetcher interface {
+	fetch(*cloudwatch.CloudWatch) (*cloudwatch.GetMetricStatisticsOutput, error)
+}
+type Fetched struct {
+	f Fetcher
+}
+type GettedMetricStatisticsOne struct {
+	// dimensions []*cloudwatch.Dimension
+	ServiceName string
+}
+
+func (g *GettedMetricStatisticsOne) fetch(svc *cloudwatch.CloudWatch) (*cloudwatch.GetMetricStatisticsOutput, error) {
+	dimensions := []*cloudwatch.Dimension{
+		{Name: aws.String("Currency"), Value: aws.String("USD")},
+		{Name: aws.String("ServiceName"), Value: aws.String(g.ServiceName)},
+	}
+	input := setMetricStatistics(dimensions)
+	metricsStatistic, err := svc.GetMetricStatistics(input)
 	if err != nil {
 		return metricsStatistic, err
 	}
+	return metricsStatistic, nil
+}
 
-	svc := cloudwatch.New(sess)
-
+func setMetricStatistics(dimensions []*cloudwatch.Dimension) *cloudwatch.GetMetricStatisticsInput {
 	input := &cloudwatch.GetMetricStatisticsInput{
 		Namespace:  aws.String("AWS/Billing"),
 		MetricName: aws.String("EstimatedCharges"),
 		Period:     aws.Int64(86400), // 1 day = 86400 sec
 		StartTime:  aws.Time(time.Now().AddDate(0, 0, -1)),
 		EndTime:    aws.Time(time.Now()),
-		// StartTime: aws.Time(time.Now().AddDate(0, 0, -3)),
-		// EndTime:   aws.Time(time.Now().AddDate(0, 0, -2)),
 		Statistics: []*string{
 			aws.String(cloudwatch.StatisticMaximum),
 		},
-		Dimensions: []*cloudwatch.Dimension{
-			{
-				Name:  aws.String("Currency"),
-				Value: aws.String("USD"),
-			},
-		},
+		Dimensions: dimensions,
+		Unit:       aws.String(cloudwatch.StandardUnitNone),
+	}
+	return input
+}
+func (s *Sessioner) FetchTotalBilling() (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
+	svc, err := s.s.newCloudwatchSession()
+	if err != nil {
+		return metricsStatistic, err
 	}
 
-	metricsStatistic, err = svc.GetMetricStatistics(input)
+	f := &Fetched{f: &GettedMetricStatisticsAll{}}
+	metricsStatistic, err = f.f.fetch(svc)
+	if err != nil {
+		return metricsStatistic, err
+	}
+	return metricsStatistic, nil
+}
+
+type GettedMetricStatisticsAll struct{}
+
+func (g *GettedMetricStatisticsAll) fetch(svc *cloudwatch.CloudWatch) (*cloudwatch.GetMetricStatisticsOutput, error) {
+	dimensions := []*cloudwatch.Dimension{
+		{Name: aws.String("Currency"), Value: aws.String("USD")},
+	}
+	input := setMetricStatistics(dimensions)
+	metricsStatistic, err := svc.GetMetricStatistics(input)
 	if err != nil {
 		return metricsStatistic, err
 	}
@@ -128,22 +156,16 @@ func FetchTotalBilling() (metricsStatistic *cloudwatch.GetMetricStatisticsOutput
 // [AmazonCloudWatch AWSSecretsManager AmazonRoute53 AmazonS3 AWSCloudTrail AWSLambda AmazonRDS AWSMarketplace AWSELB AmazonEC2 AWSDataTransfer awskms]
 //
 // https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/go/example_code/cloudwatch/listing_metrics.go
-func FetchServices() (services []string, err error) {
-	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-east-1")})
+func (s *Sessioner) ParseServices(fetcher *FetcherService) (services []string, err error) {
+	svc, err := s.s.newCloudwatchSession()
+	f := &FetchedService{f: *fetcher}
+	listMetricsOutput, err := f.f.fetch(svc)
 	if err != nil {
-		return nil, fmt.Errorf("session create error : %s", err)
+		return nil, xerrors.New(err.Error())
 	}
-	svc := cloudwatch.New(sess)
-
-	listMetricsOutput, err := svc.ListMetrics(&cloudwatch.ListMetricsInput{
-		Dimensions: []*cloudwatch.DimensionFilter{},
-		MetricName: aws.String("EstimatedCharges"),
-		Namespace:  aws.String("AWS/Billing"),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("get metrics error : %s", err)
+	if listMetricsOutput == nil {
+		return services, xerrors.New("listMetricsOutput is nil")
 	}
-
 	for _, metric := range listMetricsOutput.Metrics {
 		name := *metric.Dimensions[0].Name
 		value := *metric.Dimensions[0].Value
@@ -152,4 +174,24 @@ func FetchServices() (services []string, err error) {
 		}
 	}
 	return services, nil
+}
+
+type FetcherService interface {
+	fetch(*cloudwatch.CloudWatch) (*cloudwatch.ListMetricsOutput, error)
+}
+type FetchedService struct {
+	f FetcherService
+}
+type ListedMetrics struct{}
+
+func (l *ListedMetrics) fetch(svc *cloudwatch.CloudWatch) (*cloudwatch.ListMetricsOutput, error) {
+	listMetricsOutput, err := svc.ListMetrics(&cloudwatch.ListMetricsInput{
+		Dimensions: []*cloudwatch.DimensionFilter{},
+		MetricName: aws.String("EstimatedCharges"),
+		Namespace:  aws.String("AWS/Billing"),
+	})
+	if err != nil {
+		return listMetricsOutput, err
+	}
+	return listMetricsOutput, nil
 }
