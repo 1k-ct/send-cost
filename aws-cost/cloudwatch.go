@@ -32,14 +32,31 @@ import (
 // aws services https://pkg.go.dev/github.com/aws/aws-sdk-go@v1.42.16/aws/endpoints#pkg-constants
 //
 // https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html
-func (s *Sessioner) FetchMetricStatisticsBilling(fetcher *Fetcher, serviceName string) (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
+func FetchMetricStatisticsBilling(serviceName string) (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
+	session := &Sessioner{s: &CloudwatchSession{}}
+	metric := &GettedMetricStatisticsOne{ServiceName: serviceName}
+	metricsStatistic, err = session.fetchMetricStatistics(metric)
+	if err != nil {
+		return metricsStatistic, err
+	}
+	return metricsStatistic, nil
+}
+func FetchTotalBilling() (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
+	session := &Sessioner{s: &CloudwatchSession{}}
+	metric := &GettedMetricStatisticsAll{}
+	metricsStatistic, err = session.fetchMetricStatistics(metric)
+	if err != nil {
+		return metricsStatistic, err
+	}
+	return metricsStatistic, nil
+}
+func (s *Sessioner) fetchMetricStatistics(fetcher Fetcher) (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
 	svc, err := s.s.newCloudwatchSession()
 	if err != nil {
 		return metricsStatistic, err
 	}
 
-	// f := &Fetched{f: &GettedMetricStatisticsOne{ServiceName: serviceName}}
-	f := &Fetched{f: *fetcher}
+	f := &Fetched{f: fetcher}
 	metricsStatistic, err = f.f.fetch(svc)
 	if err != nil {
 		return metricsStatistic, err
@@ -103,19 +120,6 @@ func setMetricStatistics(dimensions []*cloudwatch.Dimension) *cloudwatch.GetMetr
 	}
 	return input
 }
-func (s *Sessioner) FetchTotalBilling() (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
-	svc, err := s.s.newCloudwatchSession()
-	if err != nil {
-		return metricsStatistic, err
-	}
-
-	f := &Fetched{f: &GettedMetricStatisticsAll{}}
-	metricsStatistic, err = f.f.fetch(svc)
-	if err != nil {
-		return metricsStatistic, err
-	}
-	return metricsStatistic, nil
-}
 
 type GettedMetricStatisticsAll struct{}
 
@@ -156,9 +160,18 @@ func (g *GettedMetricStatisticsAll) fetch(svc *cloudwatch.CloudWatch) (*cloudwat
 // [AmazonCloudWatch AWSSecretsManager AmazonRoute53 AmazonS3 AWSCloudTrail AWSLambda AmazonRDS AWSMarketplace AWSELB AmazonEC2 AWSDataTransfer awskms]
 //
 // https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/go/example_code/cloudwatch/listing_metrics.go
-func (s *Sessioner) ParseServices(fetcher *FetcherService) (services []string, err error) {
+func FetchMetricStatisticServices() (services []string, err error) {
+	session := &Sessioner{s: &CloudwatchSession{}}
+	listMetric := &ListedMetrics{}
+	services, err = session.fetchMetricStatisticServices(listMetric)
+	if err != nil {
+		return services, err
+	}
+	return services, nil
+}
+func (s *Sessioner) fetchMetricStatisticServices(fetcher FetcherService) (services []string, err error) {
 	svc, err := s.s.newCloudwatchSession()
-	f := &FetchedService{f: *fetcher}
+	f := &FetchedService{f: fetcher}
 	listMetricsOutput, err := f.f.fetch(svc)
 	if err != nil {
 		return nil, xerrors.New(err.Error())
