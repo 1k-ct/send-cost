@@ -32,7 +32,7 @@ type awsBilling struct {
 }
 
 func HandleRequest() {
-	services, err := FetchServices()
+	services, err := FetchMetricStatisticServices()
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
