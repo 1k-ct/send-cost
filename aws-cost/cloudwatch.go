@@ -37,7 +37,7 @@ func FetchMetricStatisticsBilling(serviceName string) (metricsStatistic *cloudwa
 	metric := &GettedMetricStatisticsOne{ServiceName: serviceName}
 	metricsStatistic, err = session.fetchMetricStatistics(metric)
 	if err != nil {
-		return metricsStatistic, err
+		return metricsStatistic, xerrors.Errorf("FetchMetricStatisticsBilling func error: %v", err.Error())
 	}
 	return metricsStatistic, nil
 }
@@ -53,13 +53,13 @@ func FetchTotalBilling() (metricsStatistic *cloudwatch.GetMetricStatisticsOutput
 func (s *Sessioner) fetchMetricStatistics(fetcher Fetcher) (metricsStatistic *cloudwatch.GetMetricStatisticsOutput, err error) {
 	svc, err := s.s.newCloudwatchSession()
 	if err != nil {
-		return metricsStatistic, err
+		return metricsStatistic, xerrors.New(err.Error())
 	}
 
 	f := &Fetched{f: fetcher}
 	metricsStatistic, err = f.f.fetch(svc)
 	if err != nil {
-		return metricsStatistic, err
+		return metricsStatistic, xerrors.Errorf("fetchMetricStatistics error: %v", err.Error())
 	}
 	return metricsStatistic, nil
 }
@@ -100,7 +100,7 @@ func (g *GettedMetricStatisticsOne) fetch(svc *cloudwatch.CloudWatch) (*cloudwat
 	input := setMetricStatistics(dimensions)
 	metricsStatistic, err := svc.GetMetricStatistics(input)
 	if err != nil {
-		return metricsStatistic, err
+		return metricsStatistic, xerrors.New(err.Error())
 	}
 	return metricsStatistic, nil
 }
@@ -171,6 +171,9 @@ func FetchMetricStatisticServices() (services []string, err error) {
 }
 func (s *Sessioner) fetchMetricStatisticServices(fetcher FetcherService) (services []string, err error) {
 	svc, err := s.s.newCloudwatchSession()
+	if err != nil {
+		return nil, xerrors.New(err.Error())
+	}
 	f := &FetchedService{f: fetcher}
 	listMetricsOutput, err := f.f.fetch(svc)
 	if err != nil {
