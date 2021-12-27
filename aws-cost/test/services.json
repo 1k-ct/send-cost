@@ -1,0 +1,196 @@
+{
+  "Metrics": [
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AmazonS3"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AWSSecretsManager"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AmazonEC2"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AmazonDevOpsGuru"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AWSCloudTrail"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "awskms"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AmazonRoute53"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AWSDataTransfer"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AmazonCloudWatch"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AWSMarketplace"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AWSLambda"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AWSELB"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    },
+    {
+      "Dimensions": [
+        {
+          "Name": "ServiceName",
+          "Value": "AmazonRDS"
+        },
+        {
+          "Name": "Currency",
+          "Value": "USD"
+        }
+      ],
+      "MetricName": "EstimatedCharges",
+      "Namespace": "AWS/Billing"
+    }
+  ]
+}
